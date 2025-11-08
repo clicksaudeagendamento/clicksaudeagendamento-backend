@@ -49,8 +49,8 @@ async function bootstrap() {
     bullBoardRouter,
   );
 
-  await app.listen(process.env.PORT ?? 3000);
-  logger.info(`Application running on port ${process.env.PORT ?? 3000}`);
+  await app.listen(process.env.PORT ?? 3001);
+  logger.info(`Application running on port ${process.env.PORT ?? 3001}`);
 }
 
 bootstrap().catch((err) => {
