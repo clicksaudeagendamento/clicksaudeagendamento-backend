@@ -1,0 +1,48 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH access
+        run: |
+          echo "🔐 Setting up SSH key..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github-clicksaudeagendamentodev
+          chmod 600 ~/.ssh/github-clicksaudeagendamentodev
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          echo "🚀 Connecting to VPS and starting deployment..."
+          ssh -i ~/.ssh/github-clicksaudeagendamentodev ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
+
+            echo "📁 Navigating to project directory..."
+            cd ${{ secrets.SSH_PROJECT_DIR }}
+
+            echo "📦 Pulling latest changes..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "🧱 Building Docker image..."
+            docker compose build --no-cache app
+
+            echo "🚀 Starting container..."
+            docker compose up -d app
+
+            echo "🧹 Cleaning up unused Docker resources..."
+            docker system prune -f
+
+            echo "✅ Deployment completed successfully!"
+          EOF

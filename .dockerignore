@@ -1,0 +1,29 @@
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.env
+.git
+.gitignore
+uploads
+tests
+*.md
+
+# wwebjs directories - should not be in build context
+.wwebjs*
+/sessions
+RemoteAuth-user_*.zip
+.wwebjs_auth/
+
+# Docker and database data
+mongo-data/
+mongodb-data/
+redis-data/
+docker-data/
+volumes/
+data/
+
+# Build artifacts
+dist/
+build/
+coverage/

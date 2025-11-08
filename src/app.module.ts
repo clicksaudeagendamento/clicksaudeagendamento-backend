@@ -1,0 +1,41 @@
+import { ExpressAdapter } from '@bull-board/express';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
+import { ScheduleModule as ScheduleAppModule } from './schedule/schedule.module';
+import { AppointmentModule } from './appointment/appointment.module';
+import { AppointmentQueueModule } from './appointment-queue/appointment-queue.module';
+
+@Module({
+  imports: [
+    MongooseModule.forRoot(
+      process.env.MONGO_URI ||
+        'mongodb://localhost:27017/click-saude-agendamento',
+    ),
+    ScheduleModule.forRoot(),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: +(process.env.REDIS_PORT || 6379),
+      },
+    }),
+    BullBoardModule.forRoot({
+      route: '/admin/queues',
+      adapter: ExpressAdapter,
+    }),
+    UsersModule,
+    AuthModule,
+    WhatsappModule,
+    ScheduleAppModule,
+    AppointmentModule,
+    AppointmentQueueModule,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
