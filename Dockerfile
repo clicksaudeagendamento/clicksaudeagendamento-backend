@@ -33,6 +33,6 @@ RUN mkdir -p /app/.wwebjs_auth /app/.wwebjs_cache /app/sessions /app/uploads
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-EXPOSE 3001
+EXPOSE 4000
 
 CMD ["node", "dist/main.js"]

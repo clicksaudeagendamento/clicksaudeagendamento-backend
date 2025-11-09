@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de Deploy para VPS - clicksaudeagendamento-backend
-# Este script configura e faz deploy da aplicação na VPS
+# Este script configura e faz deploy da aplicação na VPS com NGINX global
 
 set -e
 
@@ -48,64 +48,30 @@ if grep -q "TROQUE_POR" .env; then
     fi
 fi
 
-# 3. Criar diretórios necessários
-print_info "Criando diretórios necessários..."
-mkdir -p nginx/certbot/conf
-mkdir -p nginx/certbot/www
-
-# 4. Verificar qual arquivo nginx usar
-if [ ! -d "nginx/certbot/conf/live/api.clicksaudeagendamento.com.br" ]; then
-    print_warning "Certificados SSL não encontrados!"
-    print_info "Usando configuração inicial do nginx (HTTP apenas)"
-
-    # Backup do nginx.conf se existir
-    if [ -f "nginx/nginx.conf" ]; then
-        cp nginx/nginx.conf nginx/nginx.conf.backup
-    fi
-
-    # Copiar arquivo inicial
-    cp nginx/nginx-initial.conf nginx/nginx.conf
-
-    print_warning "ATENÇÃO: Após o deploy, execute os seguintes comandos para obter SSL:"
-    echo ""
-    echo "  docker compose -f docker-compose.yml exec certbot certbot certonly \\"
-    echo "    --webroot --webroot-path=/var/www/certbot \\"
-    echo "    --email SEU_EMAIL@example.com \\"
-    echo "    --agree-tos --no-eff-email \\"
-    echo "    -d api.clicksaudeagendamento.com.br"
-    echo ""
-    echo "  # Depois restaure o nginx.conf:"
-    echo "  cp nginx/nginx.conf.backup nginx/nginx.conf"
-    echo "  docker compose -f docker-compose.yml restart nginx"
-    echo ""
-else
-    print_info "Certificados SSL encontrados! Usando configuração completa."
-fi
-
-# 5. Parar containers antigos se existirem
+# 3. Parar containers antigos se existirem
 print_info "Parando containers antigos..."
-docker compose -f docker-compose.yml down || true
+docker compose down || true
 
-# 6. Limpar recursos não utilizados
+# 4. Limpar recursos não utilizados
 print_info "Limpando recursos Docker não utilizados..."
 docker system prune -f
 
-# 7. Build da imagem
+# 5. Build da imagem
 print_info "Construindo imagem Docker..."
-docker compose -f docker-compose.yml build --no-cache
+docker compose build --no-cache
 
-# 8. Subir os serviços
+# 6. Subir os serviços
 print_info "Iniciando serviços..."
-docker compose -f docker-compose.yml up -d
+docker compose up -d
 
-# 9. Verificar status dos containers
+# 7. Verificar status dos containers
 print_info "Verificando status dos containers..."
 sleep 5
-docker compose -f docker-compose.yml ps
+docker compose ps
 
-# 10. Mostrar logs
+# 8. Mostrar logs
 print_info "Últimas linhas dos logs:"
-docker compose -f docker-compose.yml logs --tail=50
+docker compose logs --tail=50
 
 echo ""
 print_info "================================="
@@ -113,15 +79,16 @@ print_info "  Deploy concluído com sucesso!"
 print_info "================================="
 echo ""
 print_info "Comandos úteis:"
-echo "  Ver logs:           docker compose -f docker-compose.yml logs -f"
-echo "  Ver logs do app:    docker compose -f docker-compose.yml logs -f app"
-echo "  Ver logs do nginx:  docker compose -f docker-compose.yml logs -f nginx"
-echo "  Parar serviços:     docker compose -f docker-compose.yml down"
-echo "  Reiniciar:          docker compose -f docker-compose.yml restart"
+echo "  Ver logs:        docker compose logs -f"
+echo "  Parar serviços:  docker compose down"
+echo "  Reiniciar:       docker compose restart"
 echo ""
-
-# Se não tiver SSL, mostrar instruções novamente
-if [ ! -d "nginx/certbot/conf/live/api.clicksaudeagendamento.com.br" ]; then
-    print_warning "Não esqueça de configurar o SSL!"
-    echo "Execute o comando certbot conforme mostrado acima."
-fi
+print_warning "Não esqueça de configurar o NGINX global da VPS!"
+echo "Arquivo de configuração disponível em: nginx/vps-site.conf"
+echo ""
+print_info "Copie para o NGINX global:"
+echo "  sudo cp nginx/vps-site.conf /etc/nginx/sites-available/clicksaudeagendamento-backend"
+echo "  sudo ln -sf /etc/nginx/sites-available/clicksaudeagendamento-backend /etc/nginx/sites-enabled/"
+echo "  sudo nginx -t"
+echo "  sudo systemctl reload nginx"
+echo ""
