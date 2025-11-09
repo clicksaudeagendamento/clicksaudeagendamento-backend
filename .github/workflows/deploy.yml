@@ -18,14 +18,14 @@ jobs:
         run: |
           echo "🔐 Setting up SSH key..."
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github-clicksaudeagendamentodev
-          chmod 600 ~/.ssh/github-clicksaudeagendamentodev
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github-clicksaudeagendamento
+          chmod 600 ~/.ssh/github-clicksaudeagendamento
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to VPS
         run: |
           echo "🚀 Connecting to VPS and starting deployment..."
-          ssh -i ~/.ssh/github-clicksaudeagendamentodev ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -i ~/.ssh/github-clicksaudeagendamento ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             set -e
 
             echo "📁 Navigating to project directory..."
