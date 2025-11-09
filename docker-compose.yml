@@ -15,7 +15,7 @@ services:
       - sessions:/app/sessions
       - uploads:/app/uploads
     networks:
-      - internal
+      - shared_net
 
 volumes:
   wwebjs-auth:
@@ -24,5 +24,6 @@ volumes:
   uploads:
 
 networks:
-  internal:
-    driver: bridge
+  shared_net:
+    external: true
+
