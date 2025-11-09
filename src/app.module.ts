@@ -10,6 +10,7 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { ScheduleModule as ScheduleAppModule } from './schedule/schedule.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { AppointmentQueueModule } from './appointment-queue/appointment-queue.module';
+import { AddressModule } from './address/address.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AppointmentQueueModule } from './appointment-queue/appointment-queue.mo
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
         port: +(process.env.REDIS_PORT || 6379),
+        password: process.env.REDIS_PASSWORD,
       },
     }),
     BullBoardModule.forRoot({
@@ -34,6 +36,7 @@ import { AppointmentQueueModule } from './appointment-queue/appointment-queue.mo
     ScheduleAppModule,
     AppointmentModule,
     AppointmentQueueModule,
+    AddressModule,
   ],
   controllers: [],
   providers: [],

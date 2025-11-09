@@ -43,7 +43,6 @@ export class UsersService {
       ...(dto.role !== 'admin' ? { accepted: false } : {}),
       specialty: dto.specialty,
       registration: dto.registration,
-      address: dto.address,
       workingHours: dto.workingHours,
     });
     await user.save();
@@ -76,7 +75,6 @@ export class UsersService {
         updatedAt: obj.updatedAt ?? null,
         specialty: obj.specialty ?? null,
         registration: obj.registration ?? null,
-        address: obj.address ?? null,
         workingHours: obj.workingHours ?? null,
       };
     });
@@ -110,7 +108,6 @@ export class UsersService {
       phone: obj.phone ?? null,
       specialty: obj.specialty ?? null,
       registration: obj.registration ?? null,
-      address: obj.address ?? null,
       workingHours: obj.workingHours ?? null,
     };
   }
@@ -129,7 +126,6 @@ export class UsersService {
         if (dto.phone) user.phone = dto.phone;
         if (dto.specialty) user.specialty = dto.specialty;
         if (dto.registration) user.registration = dto.registration;
-        if (dto.address) user.address = dto.address;
         if (dto.workingHours) user.workingHours = dto.workingHours;
         await user.save();
         return;

@@ -15,6 +15,7 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { DeleteScheduleByDateDto } from './dto/delete-schedule-by-date.dto';
 import { PublicScheduleDto } from './dto/public-schedule.dto';
+import { AddressService } from '../address/address.service';
 
 interface RequestWithUser {
   user: {
@@ -30,11 +31,19 @@ interface DeleteByDateResponse {
 
 @Controller('schedules')
 export class ScheduleController {
-  constructor(private readonly scheduleService: ScheduleService) {}
+  constructor(
+    private readonly scheduleService: ScheduleService,
+    private readonly addressService: AddressService,
+  ) {}
 
   @Get('public')
   async getPublicSchedules(@Query() dto: PublicScheduleDto) {
     return this.scheduleService.getPublicSchedules(dto);
+  }
+
+  @Get('public/addresses/:userId')
+  async getPublicAddresses(@Param('userId') userId: string) {
+    return this.addressService.findByUserId(userId);
   }
 
   @Post()

@@ -48,9 +48,6 @@ export class User {
   registration?: string;
 
   @Prop({ required: false })
-  address?: string;
-
-  @Prop({ required: false })
   workingHours?: string;
 }
 

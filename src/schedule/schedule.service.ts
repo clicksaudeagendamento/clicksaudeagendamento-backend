@@ -11,6 +11,7 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { PublicScheduleDto } from './dto/public-schedule.dto';
 import { UsersService } from '../users/users.service';
+import { AddressService } from '../address/address.service';
 
 @Injectable()
 export class ScheduleService {
@@ -18,6 +19,7 @@ export class ScheduleService {
     @InjectModel(Schedule.name)
     private readonly scheduleModel: Model<ScheduleDocument>,
     private readonly usersService: UsersService,
+    private readonly addressService: AddressService,
   ) {}
 
   async getPublicSchedules(dto: PublicScheduleDto) {
@@ -34,8 +36,20 @@ export class ScheduleService {
       );
     }
 
+    const matchStage: any = {
+      user: new Types.ObjectId(dto.userId),
+    };
+
+    // Add address filter if provided
+    if (dto.addressId) {
+      if (!Types.ObjectId.isValid(dto.addressId)) {
+        throw new BadRequestException('Invalid addressId format');
+      }
+      matchStage.address = new Types.ObjectId(dto.addressId);
+    }
+
     const result = await this.scheduleModel.aggregate([
-      { $match: { user: new Types.ObjectId(dto.userId) } },
+      { $match: matchStage },
       {
         $addFields: {
           month: { $month: '$dateTime' },
@@ -50,6 +64,20 @@ export class ScheduleService {
         },
       },
       { $unset: ['month', 'year'] },
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'address',
+          foreignField: '_id',
+          as: 'addressDetails',
+        },
+      },
+      {
+        $unwind: {
+          path: '$addressDetails',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       {
         $addFields: {
           date: {
@@ -75,6 +103,17 @@ export class ScheduleService {
           time: 1,
           status: 1,
           dateTime: 1,
+          address: {
+            _id: '$addressDetails._id',
+            name: '$addressDetails.name',
+            street: '$addressDetails.street',
+            number: '$addressDetails.number',
+            complement: '$addressDetails.complement',
+            neighborhood: '$addressDetails.neighborhood',
+            city: '$addressDetails.city',
+            state: '$addressDetails.state',
+            zipCode: '$addressDetails.zipCode',
+          },
         },
       },
       { $sort: { dateTime: 1 } },
@@ -87,6 +126,19 @@ export class ScheduleService {
     const schedules: any[] = [];
     const baseDate = new Date(createScheduleDto.date);
 
+    // Validate address exists and belongs to user
+    if (!Types.ObjectId.isValid(createScheduleDto.address)) {
+      throw new BadRequestException('Invalid address format');
+    }
+
+    try {
+      await this.addressService.findOne(createScheduleDto.address, userId);
+    } catch (error) {
+      throw new BadRequestException(
+        'Address not found or does not belong to you',
+      );
+    }
+
     for (const timeSlot of createScheduleDto.timeSlots) {
       const [hours, minutes] = timeSlot.split(':').map(Number);
 
@@ -98,6 +150,7 @@ export class ScheduleService {
       const schedule = new this.scheduleModel({
         dateTime,
         user: new Types.ObjectId(userId),
+        address: new Types.ObjectId(createScheduleDto.address),
         status: 'open',
         appointment: null,
       });
@@ -138,6 +191,20 @@ export class ScheduleService {
         },
         { $unset: ['month', 'year'] },
         {
+          $lookup: {
+            from: 'addresses',
+            localField: 'address',
+            foreignField: '_id',
+            as: 'addressDetails',
+          },
+        },
+        {
+          $unwind: {
+            path: '$addressDetails',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $addFields: {
             date: {
               $dateToString: {
@@ -162,6 +229,17 @@ export class ScheduleService {
             time: 1,
             status: 1,
             dateTime: 1,
+            address: {
+              _id: '$addressDetails._id',
+              name: '$addressDetails.name',
+              street: '$addressDetails.street',
+              number: '$addressDetails.number',
+              complement: '$addressDetails.complement',
+              neighborhood: '$addressDetails.neighborhood',
+              city: '$addressDetails.city',
+              state: '$addressDetails.state',
+              zipCode: '$addressDetails.zipCode',
+            },
           },
         },
         { $sort: { dateTime: 1 } },
@@ -178,11 +256,14 @@ export class ScheduleService {
         user: new Types.ObjectId(userId),
         dateTime: { $gte: start, $lte: end },
       };
-      return this.scheduleModel.find(query).exec();
+      return this.scheduleModel.find(query).populate('address').exec();
     }
 
     // If no filters, return all schedules for the user
-    return this.scheduleModel.find({ user: new Types.ObjectId(userId) }).exec();
+    return this.scheduleModel
+      .find({ user: new Types.ObjectId(userId) })
+      .populate('address')
+      .exec();
   }
 
   async delete(scheduleId: string, userId: string) {

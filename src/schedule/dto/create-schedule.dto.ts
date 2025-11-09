@@ -4,6 +4,7 @@ import {
   IsArray,
   IsString,
   ArrayMinSize,
+  IsMongoId,
 } from 'class-validator';
 
 export class CreateScheduleDto {
@@ -15,4 +16,8 @@ export class CreateScheduleDto {
   @ArrayMinSize(1)
   @IsString({ each: true })
   timeSlots: string[];
+
+  @IsMongoId()
+  @IsNotEmpty()
+  address: string;
 }

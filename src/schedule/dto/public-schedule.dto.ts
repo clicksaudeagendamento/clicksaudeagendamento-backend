@@ -5,6 +5,7 @@ import {
   IsNumber,
   Min,
   Max,
+  IsMongoId,
 } from 'class-validator';
 
 export class PublicScheduleDto {
@@ -20,4 +21,8 @@ export class PublicScheduleDto {
   @IsNumber()
   @IsOptional()
   year?: number;
+
+  @IsMongoId()
+  @IsOptional()
+  addressId?: string;
 }
