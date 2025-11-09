@@ -3,22 +3,26 @@ version: '3.8'
 services:
   app:
     build: .
-    container_name: clicksaudeagendamento-backend
+    container_name: clicksaudeagendamento
     restart: unless-stopped
     env_file:
       - .env
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
-      # WhatsApp session persistence
       - wwebjs-auth:/app/.wwebjs_auth
       - wwebjs-cache:/app/.wwebjs_cache
       - sessions:/app/sessions
-      # Uploads persistence
       - uploads:/app/uploads
+    networks:
+      - internal
 
 volumes:
   wwebjs-auth:
   wwebjs-cache:
   sessions:
   uploads:
+
+networks:
+  internal:
+    driver: bridge
