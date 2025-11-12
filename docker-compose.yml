@@ -24,6 +24,7 @@ services:
       - uploads:/app/uploads
     networks:
       - mongo
+      - redis
 
 volumes:
   wwebjs-auth:
@@ -33,4 +34,6 @@ volumes:
 
 networks:
   mongo:
+    external: true
+  redis:
     external: true
