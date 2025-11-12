@@ -31,8 +31,8 @@ export class WhatsappSessionService implements OnModuleInit {
   private isConnecting = false;
 
   constructor() {
-    mongoose.connect('mongodb://localhost:27017/click-saude-agendamento', {
-      dbName: 'click-saude-agendamento',
+    mongoose.connect(process.env.MONGO_URI!, {
+      dbName: process.env.MONGO_DB_NAME!,
     });
   }
 
