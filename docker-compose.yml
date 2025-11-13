@@ -22,9 +22,12 @@ services:
       - sessions:/app/sessions
       # Uploads persistence
       - uploads:/app/uploads
+    expose:
+      - "3000"
     networks:
       - mongo
       - redis
+      - clicksaudeagendamento
 
 volumes:
   wwebjs-auth:
@@ -37,3 +40,5 @@ networks:
     external: true
   redis:
     external: true
+  clicksaudeagendamento:
+    name: clicksaudeagendamento
