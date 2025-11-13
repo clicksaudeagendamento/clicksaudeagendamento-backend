@@ -22,8 +22,8 @@ services:
       - sessions:/app/sessions
       # Uploads persistence
       - uploads:/app/uploads
-    expose:
-      - "3000"
+    ports:
+      - "4000:4000"
     networks:
       - mongo
       - redis
