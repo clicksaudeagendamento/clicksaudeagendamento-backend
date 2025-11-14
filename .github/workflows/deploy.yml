@@ -25,7 +25,7 @@ jobs:
       - name: Deploy to VPS
         run: |
           echo "🚀 Connecting to VPS and starting deployment..."
-          ssh -i ~/.ssh/clicksaudeagendamento-dev ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -i ~/.ssh/clicksaudeagendamento-dev ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             set -e
 
             echo "📁 Navigating to project directory..."
