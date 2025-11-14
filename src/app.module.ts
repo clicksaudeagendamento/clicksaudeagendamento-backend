@@ -11,13 +11,16 @@ import { ScheduleModule as ScheduleAppModule } from './schedule/schedule.module'
 import { AppointmentModule } from './appointment/appointment.module';
 import { AppointmentQueueModule } from './appointment-queue/appointment-queue.module';
 import { AddressModule } from './address/address.module';
+import { ConfigModule } from '@nestjs/config';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(
-      process.env.MONGO_URI ||
-        'mongodb://localhost:27017/click-saude-agendamento',
-    ),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
     ScheduleModule.forRoot(),
     BullModule.forRoot({
       redis: {
@@ -30,6 +33,7 @@ import { AddressModule } from './address/address.module';
       route: '/admin/queues',
       adapter: ExpressAdapter,
     }),
+    HealthModule,
     UsersModule,
     AuthModule,
     WhatsappModule,

@@ -4,18 +4,30 @@ services:
   app:
     build: .
     container_name: clicksaudeagendamento
-    restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - "127.0.0.1:4000:4000"
+    environment:
+      - PORT=${PORT}
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - BULL_BOARD_PASSWORD=${BULL_BOARD_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: always
     volumes:
+      # WhatsApp session persistence
       - wwebjs-auth:/app/.wwebjs_auth
       - wwebjs-cache:/app/.wwebjs_cache
       - sessions:/app/sessions
+      # Uploads persistence
       - uploads:/app/uploads
+    ports:
+      - "4000:4000"
     networks:
-      - shared_net
+      - mongo
+      - redis
+      - clicksaudeagendamento
 
 volumes:
   wwebjs-auth:
@@ -24,6 +36,9 @@ volumes:
   uploads:
 
 networks:
-  shared_net:
+  mongo:
     external: true
-
+  redis:
+    external: true
+  clicksaudeagendamento:
+    name: clicksaudeagendamento
