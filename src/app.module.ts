@@ -11,6 +11,8 @@ import { ScheduleModule as ScheduleAppModule } from './schedule/schedule.module'
 import { AppointmentModule } from './appointment/appointment.module';
 import { AppointmentQueueModule } from './appointment-queue/appointment-queue.module';
 import { ConfigModule } from '@nestjs/config';
+import { HealthModule } from './health/health.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,6 +31,7 @@ import { ConfigModule } from '@nestjs/config';
       route: '/admin/queues',
       adapter: ExpressAdapter,
     }),
+    HealthModule,
     UsersModule,
     AuthModule,
     WhatsappModule,
