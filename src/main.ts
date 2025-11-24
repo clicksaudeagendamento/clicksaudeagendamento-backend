@@ -1,14 +1,13 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as crypto from 'crypto';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import logger from './configs/logger';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import * as crypto from 'crypto';
 
-import { bullBoardRouter } from './admin/dynamic-bull-board';
-import * as express from 'express';
 import * as basicAuth from 'express-basic-auth';
 import * as swaggerStats from 'swagger-stats';
+import { bullBoardRouter } from './admin/dynamic-bull-board';
 
 // Make crypto available globally
 (global as any).crypto = crypto;
@@ -34,7 +33,7 @@ async function bootstrap() {
       uriPath: '/swagger-stats',
       authentication: true,
       onAuthenticate: (req, username, password) =>
-        username === 'admin' && password === 'admin',
+        username === 'admin' && password === process.env.BULL_BOARD_PASSWORD,
     }),
   );
 
