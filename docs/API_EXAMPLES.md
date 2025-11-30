@@ -2,7 +2,7 @@
 
 ## Variáveis de Ambiente
 ```bash
-BASE_URL="http://localhost:3001"
+BASE_URL="http://localhost:4000"
 TOKEN="seu_token_jwt_aqui"
 USER_ID="id_do_usuario"
 PROFESSIONAL_ID="id_do_profissional"
@@ -514,14 +514,14 @@ curl -X POST "${BASE_URL}/whatsapp/disconnect" \
 
 ### 9.1 Bull Board (Filas)
 ```
-Acessar no navegador: http://localhost:3001/admin/queues
+Acessar no navegador: http://localhost:4000/admin/queues
 Usuário: admin
 Senha: admin (ou valor definido em BULL_BOARD_PASSWORD)
 ```
 
 ### 9.2 Swagger Stats
 ```
-Acessar no navegador: http://localhost:3001/swagger-stats
+Acessar no navegador: http://localhost:4000/swagger-stats
 Usuário: admin
 Senha: admin
 ```
