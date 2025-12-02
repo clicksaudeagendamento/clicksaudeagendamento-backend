@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsMongoId } from 'class-validator';
 
 export class FilterScheduleDto {
   @IsString()
@@ -8,4 +8,8 @@ export class FilterScheduleDto {
   @IsString()
   @IsOptional()
   date?: string; // format: dd-mm-yyyy
+
+  @IsMongoId()
+  @IsOptional()
+  addressId?: string;
 }

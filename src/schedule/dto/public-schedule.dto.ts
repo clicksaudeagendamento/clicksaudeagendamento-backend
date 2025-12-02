@@ -20,4 +20,8 @@ export class PublicScheduleDto {
   @IsNumber()
   @IsOptional()
   year?: number;
+
+  @IsString()
+  @IsOptional()
+  addressId?: string;
 }

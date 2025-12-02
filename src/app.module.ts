@@ -10,6 +10,7 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { ScheduleModule as ScheduleAppModule } from './schedule/schedule.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { AppointmentQueueModule } from './appointment-queue/appointment-queue.module';
+import { AddressModule } from './address/address.module';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './health/health.module';
 
@@ -39,6 +40,7 @@ import { HealthModule } from './health/health.module';
     ScheduleAppModule,
     AppointmentModule,
     AppointmentQueueModule,
+    AddressModule,
   ],
   controllers: [],
   providers: [],

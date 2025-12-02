@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Schedule } from '../schedule/schedule.schema';
+import { Address } from '../address/address.schema';
 
 export type AppointmentDocument = Appointment & Document;
 
@@ -14,6 +15,9 @@ export type AppointmentStatus =
 export class Appointment {
   @Prop({ type: Types.ObjectId, ref: 'Schedule', required: true })
   schedule: Schedule | Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Address', required: false })
+  address: Address | Types.ObjectId;
 
   @Prop({
     required: true,

@@ -11,6 +11,7 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { FilterScheduleDto } from './dto/filter-schedule.dto';
 import { PublicScheduleDto } from './dto/public-schedule.dto';
 import { UsersService } from '../users/users.service';
+import { AddressService } from '../address/address.service';
 
 @Injectable()
 export class ScheduleService {
@@ -18,6 +19,7 @@ export class ScheduleService {
     @InjectModel(Schedule.name)
     private readonly scheduleModel: Model<ScheduleDocument>,
     private readonly usersService: UsersService,
+    private readonly addressService: AddressService,
   ) {}
 
   async getPublicSchedules(dto: PublicScheduleDto) {
@@ -34,8 +36,19 @@ export class ScheduleService {
       );
     }
 
+    // Build the initial match criteria
+    const matchCriteria: any = { user: new Types.ObjectId(dto.userId) };
+
+    // Add address filter if provided
+    if (dto.addressId) {
+      if (!Types.ObjectId.isValid(dto.addressId)) {
+        throw new BadRequestException('Invalid addressId format');
+      }
+      matchCriteria.address = new Types.ObjectId(dto.addressId);
+    }
+
     const result = await this.scheduleModel.aggregate([
-      { $match: { user: new Types.ObjectId(dto.userId) } },
+      { $match: matchCriteria },
       {
         $addFields: {
           month: { $month: '$dateTime' },
@@ -100,6 +113,9 @@ export class ScheduleService {
         user: new Types.ObjectId(userId),
         status: 'open',
         appointment: null,
+        ...(createScheduleDto.addressId && {
+          address: new Types.ObjectId(createScheduleDto.addressId),
+        }),
       });
 
       const savedSchedule = await schedule.save();
@@ -114,6 +130,39 @@ export class ScheduleService {
       throw new BadRequestException('Invalid userId format');
     }
 
+    // Get user's active addresses
+    const activeAddresses = await this.addressService.findActiveByUser(userId);
+
+    // Determine which addressId to use
+    let addressIdToFilter: string | null = null;
+
+    if (filter.addressId) {
+      // Validate that the provided addressId belongs to user and is active
+      const isValid = activeAddresses.some(
+        (addr) => (addr._id as Types.ObjectId).toString() === filter.addressId,
+      );
+      if (!isValid) {
+        throw new BadRequestException(
+          'O endereço informado não existe ou não está ativo',
+        );
+      }
+      addressIdToFilter = filter.addressId;
+    } else if (activeAddresses.length === 1) {
+      // Auto-select the only active address
+      addressIdToFilter = (activeAddresses[0]._id as Types.ObjectId).toString();
+    } else if (activeAddresses.length > 1) {
+      // Multiple addresses but none specified
+      throw new BadRequestException(
+        'Você possui múltiplos endereços ativos. Por favor, informe o addressId para filtrar as agendas',
+      );
+    }
+    // If no active addresses, proceed without address filter (addressIdToFilter remains null)
+
+    const matchCondition: any = { user: new Types.ObjectId(userId) };
+    if (addressIdToFilter) {
+      matchCondition.address = new Types.ObjectId(addressIdToFilter);
+    }
+
     if (filter.month) {
       const month = parseInt(filter.month, 10);
       if (month < 1 || month > 12) {
@@ -123,7 +172,7 @@ export class ScheduleService {
       const year = new Date().getFullYear();
 
       const result = await this.scheduleModel.aggregate([
-        { $match: { user: new Types.ObjectId(userId) } },
+        { $match: matchCondition },
         {
           $addFields: {
             month: { $month: '$dateTime' },
@@ -162,6 +211,7 @@ export class ScheduleService {
             time: 1,
             status: 1,
             dateTime: 1,
+            address: 1,
           },
         },
         { $sort: { dateTime: 1 } },
@@ -174,15 +224,12 @@ export class ScheduleService {
       const [day, month, year] = filter.date.split('-');
       const start = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
       const end = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-      const query = {
-        user: new Types.ObjectId(userId),
-        dateTime: { $gte: start, $lte: end },
-      };
-      return this.scheduleModel.find(query).exec();
+      matchCondition.dateTime = { $gte: start, $lte: end };
+      return this.scheduleModel.find(matchCondition).exec();
     }
 
     // If no filters, return all schedules for the user
-    return this.scheduleModel.find({ user: new Types.ObjectId(userId) }).exec();
+    return this.scheduleModel.find(matchCondition).exec();
   }
 
   async delete(scheduleId: string, userId: string) {

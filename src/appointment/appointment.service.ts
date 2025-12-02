@@ -12,11 +12,13 @@ import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto'
 import { FilterAppointmentDto } from './dto/filter-appointment.dto';
 import { Schedule, ScheduleDocument } from 'src/schedule/schedule.schema';
 import { User, UserDocument } from 'src/users/user.schema';
+import { AddressService } from '../address/address.service';
 
 export interface AppointmentWithProfessional {
   _id: Types.ObjectId;
   scheduleId: Types.ObjectId;
   scheduleDateTime: Date;
+  addressId?: Types.ObjectId;
   professional: {
     fullName: string;
     specialty?: string;
@@ -45,6 +47,7 @@ export class AppointmentService {
     private readonly scheduleModel: Model<ScheduleDocument>,
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
+    private readonly addressService: AddressService,
   ) {}
 
   private async getAppointmentWithProfessionalInfo(
@@ -105,6 +108,34 @@ export class AppointmentService {
     userId: string,
     filter: FilterAppointmentDto,
   ): Promise<AppointmentWithProfessional[]> {
+    // Get user's active addresses
+    const activeAddresses = await this.addressService.findActiveByUser(userId);
+
+    // Determine which addressId to use
+    let addressIdToFilter: Types.ObjectId | null = null;
+
+    if (filter.addressId) {
+      // Validate that the provided addressId belongs to user and is active
+      const isValid = activeAddresses.some(
+        (addr) => (addr._id as Types.ObjectId).toString() === filter.addressId,
+      );
+      if (!isValid) {
+        throw new BadRequestException(
+          'O endereço informado não existe ou não está ativo',
+        );
+      }
+      addressIdToFilter = new Types.ObjectId(filter.addressId);
+    } else if (activeAddresses.length === 1) {
+      // Auto-select the only active address
+      addressIdToFilter = activeAddresses[0]._id as Types.ObjectId;
+    } else if (activeAddresses.length > 1) {
+      // Multiple addresses but none specified
+      throw new BadRequestException(
+        'Você possui múltiplos endereços ativos. Por favor, informe o addressId para filtrar os agendamentos',
+      );
+    }
+    // If no active addresses, proceed without address filter (addressIdToFilter remains null)
+
     const basePipeline = [
       {
         $lookup: {
@@ -116,6 +147,9 @@ export class AppointmentService {
       },
       { $unwind: '$scheduleData' },
       { $match: { 'scheduleData.user': new Types.ObjectId(userId) } },
+      ...(addressIdToFilter
+        ? [{ $match: { address: addressIdToFilter } }]
+        : []),
       {
         $lookup: {
           from: 'users',
@@ -129,6 +163,7 @@ export class AppointmentService {
         $addFields: {
           scheduleId: '$scheduleData._id',
           scheduleDateTime: '$scheduleData.dateTime',
+          addressId: '$address',
           professional: {
             fullName: '$userData.fullName',
             specialty: '$userData.specialty',
@@ -143,6 +178,7 @@ export class AppointmentService {
           _id: 1,
           scheduleId: 1,
           scheduleDateTime: 1,
+          addressId: 1,
           professional: 1,
           status: 1,
           patient: 1,
@@ -235,6 +271,7 @@ export class AppointmentService {
         $addFields: {
           scheduleId: '$scheduleData._id',
           scheduleDateTime: '$scheduleData.dateTime',
+          addressId: '$address',
           professional: {
             fullName: '$userData.fullName',
             specialty: '$userData.specialty',
@@ -249,6 +286,7 @@ export class AppointmentService {
           _id: 1,
           scheduleId: 1,
           scheduleDateTime: 1,
+          addressId: 1,
           professional: 1,
           status: 1,
           patient: 1,
@@ -279,6 +317,7 @@ export class AppointmentService {
         primaryPhone: createDto.primaryPhone,
         secondaryPhone: createDto.secondaryPhone,
       },
+      ...(schedule.address && { address: schedule.address }),
     });
     await appointment.save();
     schedule.status = 'closed';

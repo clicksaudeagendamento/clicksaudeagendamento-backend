@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { User } from '../users/user.schema';
+import { Address } from '../address/address.schema';
 
 export type ScheduleDocument = Schedule & Document;
 
@@ -10,6 +11,9 @@ export type ScheduleStatus = 'open' | 'closed';
 export class Schedule {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user: User | Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Address', required: false })
+  address: Address | Types.ObjectId;
 
   @Prop({ required: true, enum: ['open', 'closed'], default: 'open' })
   status: ScheduleStatus;

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString, Matches, IsMongoId } from 'class-validator';
 
 export class FilterAppointmentDto {
   @IsString()
@@ -14,4 +14,8 @@ export class FilterAppointmentDto {
     message: 'Date must be in DD-MM-YYYY format',
   })
   date?: string; // format: dd-mm-yyyy
+
+  @IsMongoId()
+  @IsOptional()
+  addressId?: string;
 }

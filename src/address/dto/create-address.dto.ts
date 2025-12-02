@@ -1,35 +1,8 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength } from 'class-validator';
 
 export class CreateAddressDto {
   @IsString()
   @IsNotEmpty()
-  street: string;
-
-  @IsString()
-  @IsNotEmpty()
-  number: string;
-
-  @IsString()
-  @IsOptional()
-  complement?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  neighborhood: string;
-
-  @IsString()
-  @IsNotEmpty()
-  city: string;
-
-  @IsString()
-  @IsNotEmpty()
-  state: string;
-
-  @IsString()
-  @IsNotEmpty()
-  zipCode: string;
-
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+  @MinLength(10, { message: 'O endereço deve ter pelo menos 10 caracteres' })
+  address: string;
 }
