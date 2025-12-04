@@ -61,6 +61,9 @@ export class User {
 
   @Prop({ required: false })
   instagram?: string;
+
+  @Prop({ required: false })
+  profileImage?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
