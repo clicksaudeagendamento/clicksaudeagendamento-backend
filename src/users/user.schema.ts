@@ -52,6 +52,15 @@ export class User {
 
   @Prop({ required: false })
   workingHours?: string;
+
+  @Prop({ required: false })
+  description?: string;
+
+  @Prop({ required: false })
+  website?: string;
+
+  @Prop({ required: false })
+  instagram?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -78,6 +78,9 @@ export class UsersService {
         registration: obj.registration ?? null,
         address: obj.address ?? null,
         workingHours: obj.workingHours ?? null,
+        description: obj.description ?? null,
+        website: obj.website ?? null,
+        instagram: obj.instagram ?? null,
       };
     });
   }
@@ -113,6 +116,9 @@ export class UsersService {
       registration: obj.registration ?? null,
       address: obj.address ?? null,
       workingHours: obj.workingHours ?? null,
+      description: obj.description ?? null,
+      website: obj.website ?? null,
+      instagram: obj.instagram ?? null,
     };
   }
 
@@ -132,6 +138,9 @@ export class UsersService {
         if (dto.registration) user.registration = dto.registration;
         if (dto.address) user.address = dto.address;
         if (dto.workingHours) user.workingHours = dto.workingHours;
+        if (dto.description) user.description = dto.description;
+        if (dto.website) user.website = dto.website;
+        if (dto.instagram) user.instagram = dto.instagram;
         await user.save();
         return;
       }
