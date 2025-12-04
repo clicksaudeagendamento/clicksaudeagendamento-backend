@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import logger from './configs/logger';
+import * as express from 'express';
 
 import * as basicAuth from 'express-basic-auth';
 import * as swaggerStats from 'swagger-stats';
@@ -16,7 +17,13 @@ import { bullBoardRouter } from './admin/dynamic-bull-board';
 (global as any).crypto = crypto;
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: true,
+  });
+
+  // Configure body parser limits for large payloads (images in base64)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   app.enableCors({
     origin: '*',
