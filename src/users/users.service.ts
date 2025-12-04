@@ -105,6 +105,7 @@ export class UsersService {
           updatedAt?: Date;
         });
     return {
+      _id: obj._id ?? null,
       fullName: obj.fullName ?? null,
       email: obj.email ?? null,
       phone: obj.phone ?? null,
