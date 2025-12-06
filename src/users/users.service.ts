@@ -143,7 +143,8 @@ export class UsersService {
         if (dto.description) user.description = dto.description;
         if (dto.website) user.website = dto.website;
         if (dto.instagram) user.instagram = dto.instagram;
-        if (dto.profileImage !== undefined) user.profileImage = dto.profileImage;
+        if (dto.profileImage !== undefined)
+          user.profileImage = dto.profileImage;
         await user.save();
         return;
       }

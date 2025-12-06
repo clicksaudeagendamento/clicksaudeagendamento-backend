@@ -98,31 +98,112 @@ export class ScheduleService {
 
   async create(createScheduleDto: CreateScheduleDto, userId: string) {
     const schedules: any[] = [];
-    const baseDate = new Date(createScheduleDto.date);
 
-    for (const timeSlot of createScheduleDto.timeSlots) {
-      const [hours, minutes] = timeSlot.split(':').map(Number);
+    // Determine the dates to create schedules for
+    const datesToProcess = this.calculateDatesToProcess(createScheduleDto);
 
-      // Montar a string ISO local para garantir o horário correto
-      const datePart = createScheduleDto.date.split('T')[0];
-      const dateString = `${datePart}T${timeSlot}:00`;
-      const dateTime = new Date(dateString);
+    for (const dateStr of datesToProcess) {
+      for (const timeSlot of createScheduleDto.timeSlots) {
+        const [hours, minutes] = timeSlot.split(':').map(Number);
 
-      const schedule = new this.scheduleModel({
-        dateTime,
-        user: new Types.ObjectId(userId),
-        status: 'open',
-        appointment: null,
-        ...(createScheduleDto.addressId && {
-          address: new Types.ObjectId(createScheduleDto.addressId),
-        }),
-      });
+        // Build ISO date string with time
+        const datePart = dateStr.split('T')[0];
+        const dateString = `${datePart}T${timeSlot}:00`;
+        const dateTime = new Date(dateString);
 
-      const savedSchedule = await schedule.save();
-      schedules.push(savedSchedule);
+        const schedule = new this.scheduleModel({
+          dateTime,
+          user: new Types.ObjectId(userId),
+          status: 'open',
+          appointment: null,
+          ...(createScheduleDto.addressId && {
+            address: new Types.ObjectId(createScheduleDto.addressId),
+          }),
+        });
+
+        const savedSchedule = await schedule.save();
+        schedules.push(savedSchedule);
+      }
     }
 
     return schedules;
+  }
+
+  /**
+   * Calculate which dates to create schedules for based on the DTO
+   */
+  private calculateDatesToProcess(dto: CreateScheduleDto): string[] {
+    const dates: string[] = [];
+
+    // Legacy support: if 'date' is provided, use it
+    if (dto.date) {
+      dates.push(dto.date);
+      return dates;
+    }
+
+    // New flow: use startDate/endDate with optional recurrence
+    if (!dto.startDate) {
+      throw new BadRequestException(
+        'Either date or startDate must be provided',
+      );
+    }
+
+    const startDate = new Date(dto.startDate);
+    const endDate = dto.endDate
+      ? new Date(dto.endDate)
+      : new Date(dto.startDate);
+
+    // Validate date range
+    if (endDate < startDate) {
+      throw new BadRequestException(
+        'endDate must be after or equal to startDate',
+      );
+    }
+
+    // Handle recurrence
+    if (dto.recurrence && dto.recurrence.enabled) {
+      return this.calculateRecurringDates(startDate, dto.recurrence);
+    }
+
+    // Handle date range (all days between startDate and endDate)
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      dates.push(currentDate.toISOString().split('T')[0] + 'T00:00:00.000Z');
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  /**
+   * Calculate recurring dates based on a specific day of week
+   */
+  private calculateRecurringDates(
+    startDate: Date,
+    recurrence: { dayOfWeek?: number; occurrences?: number },
+  ): string[] {
+    const dates: string[] = [];
+    const dayOfWeek = recurrence.dayOfWeek ?? startDate.getDay();
+    const occurrences = recurrence.occurrences ?? 1;
+
+    // Find the first occurrence of the specified day of week starting from startDate
+    const currentDate = new Date(startDate);
+    const daysUntilTarget = (dayOfWeek - currentDate.getDay() + 7) % 7;
+    currentDate.setDate(currentDate.getDate() + daysUntilTarget);
+
+    // If we've moved past the start date and it wasn't the target day, start from the found day
+    // If start date IS the target day, use it
+    if (startDate.getDay() === dayOfWeek) {
+      currentDate.setTime(startDate.getTime());
+    }
+
+    // Generate dates for the specified number of occurrences
+    for (let i = 0; i < occurrences; i++) {
+      dates.push(currentDate.toISOString().split('T')[0] + 'T00:00:00.000Z');
+      currentDate.setDate(currentDate.getDate() + 7); // Move to next week
+    }
+
+    return dates;
   }
 
   async findAll(userId: string, filter: FilterScheduleDto) {
