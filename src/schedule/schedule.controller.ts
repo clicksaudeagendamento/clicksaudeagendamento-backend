@@ -37,6 +37,18 @@ export class ScheduleController {
     return this.scheduleService.getPublicSchedules(dto);
   }
 
+  @Get('count/total')
+  @UseGuards(JwtAuthGuard)
+  async getTotalScheduleCount(@Req() req: RequestWithUser): Promise<number> {
+    return this.scheduleService.getTotalScheduleCount(req.user.userId);
+  }
+
+  @Get('count/monthly')
+  @UseGuards(JwtAuthGuard)
+  async getMonthlyScheduleCount(@Req() req: RequestWithUser): Promise<number> {
+    return this.scheduleService.getMonthlyScheduleCount(req.user.userId);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateScheduleDto, @Req() req: RequestWithUser) {

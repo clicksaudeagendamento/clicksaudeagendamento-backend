@@ -4,11 +4,49 @@ export type UserDocument = User & Document;
 
 export type PlanType = 'demo' | 'basic' | 'professional' | 'enterprise';
 
-export const PLANS = {
-  demo: { name: 'demo', price: 0, credits: 50 },
-  basic: { name: 'basic', price: 97, credits: 1000 },
-  professional: { name: 'professional', price: 197, credits: 5000 },
-  enterprise: { name: 'enterprise', price: 397, credits: 10000 },
+export interface PlanConfig {
+  name: string;
+  price: number;
+  credits: number;
+  maxSchedulesPerMonth?: number; // undefined means unlimited
+  maxSchedulesTotal?: number; // for demo plan only
+  maxAddresses: number | 'unlimited';
+  isPeriodic: boolean; // true if monthly limit, false if total limit
+}
+
+export const PLANS: Record<PlanType, PlanConfig> = {
+  demo: {
+    name: 'demo',
+    price: 0,
+    credits: 50,
+    maxSchedulesTotal: 50, // Total limit of 50 schedules
+    maxAddresses: 1,
+    isPeriodic: false, // Not monthly, it's a total limit
+  },
+  basic: {
+    name: 'one',
+    price: 67,
+    credits: 80,
+    maxSchedulesPerMonth: 80, // 80 schedules per month
+    maxAddresses: 1,
+    isPeriodic: true,
+  },
+  professional: {
+    name: 'pro',
+    price: 99,
+    credits: 120,
+    maxSchedulesPerMonth: 120, // 120 schedules per month
+    maxAddresses: 3,
+    isPeriodic: true,
+  },
+  enterprise: {
+    name: 'prime',
+    price: 159,
+    credits: 300,
+    maxSchedulesPerMonth: 300, // 300 schedules per month
+    maxAddresses: 'unlimited',
+    isPeriodic: true,
+  },
 };
 
 @Schema({ timestamps: true })
@@ -36,7 +74,7 @@ export class User {
 
   @Prop({
     type: String,
-    enum: ['demo', 'basic', 'professional', 'enterprise'],
+    enum: ['demo', 'one', 'pro', 'prime'],
     default: 'demo',
   })
   plan?: PlanType;

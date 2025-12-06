@@ -9,11 +9,13 @@ import { Model, Types } from 'mongoose';
 import { Address, AddressDocument } from './address.schema';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AddressService {
   constructor(
     @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
+    private readonly usersService: UsersService,
   ) {}
 
   /**
@@ -23,6 +25,20 @@ export class AddressService {
     createAddressDto: CreateAddressDto,
     userId: string,
   ): Promise<Address> {
+    // Check current address count
+    const currentAddressCount = await this.addressModel.countDocuments({
+      user: new Types.ObjectId(userId),
+    });
+
+    // Validate against plan limits
+    const validation = await this.usersService.canCreateAddress(
+      userId,
+      currentAddressCount,
+    );
+    if (!validation.allowed) {
+      throw new ForbiddenException(validation.reason);
+    }
+
     const newAddress = new this.addressModel({
       ...createAddressDto,
       user: new Types.ObjectId(userId),

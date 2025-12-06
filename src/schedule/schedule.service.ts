@@ -97,10 +97,70 @@ export class ScheduleService {
   }
 
   async create(createScheduleDto: CreateScheduleDto, userId: string) {
+    // Get user plan configuration
+    const planConfig = await this.usersService.getUserPlanConfig(userId);
+
+    // Calculate dates to process
+    const datesToProcess = this.calculateDatesToProcess(createScheduleDto);
+    const schedulesToCreateCount =
+      datesToProcess.length * createScheduleDto.timeSlots.length;
+
+    // For demo plan: check total schedules
+    if (!planConfig.isPeriodic && planConfig.maxSchedulesTotal !== undefined) {
+      const totalScheduleCount = await this.scheduleModel.countDocuments({
+        user: new Types.ObjectId(userId),
+      });
+
+      const validation = await this.usersService.canCreateSchedule(
+        userId,
+        0, // not used for demo
+        totalScheduleCount + schedulesToCreateCount,
+      );
+
+      if (!validation.allowed) {
+        throw new ForbiddenException(validation.reason);
+      }
+    }
+
+    // For other plans: check monthly schedules
+    if (
+      planConfig.isPeriodic &&
+      planConfig.maxSchedulesPerMonth !== undefined
+    ) {
+      // Get current month's schedule count
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+
+      const monthlyScheduleCount = await this.scheduleModel.countDocuments({
+        user: new Types.ObjectId(userId),
+        dateTime: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      });
+
+      const validation = await this.usersService.canCreateSchedule(
+        userId,
+        monthlyScheduleCount + schedulesToCreateCount,
+      );
+
+      if (!validation.allowed) {
+        throw new ForbiddenException(validation.reason);
+      }
+    }
+
     const schedules: any[] = [];
 
     // Determine the dates to create schedules for
-    const datesToProcess = this.calculateDatesToProcess(createScheduleDto);
 
     for (const dateStr of datesToProcess) {
       for (const timeSlot of createScheduleDto.timeSlots) {
@@ -374,5 +434,33 @@ export class ScheduleService {
       { status: 'open', appointment: null },
       { new: true },
     );
+  }
+
+  async getTotalScheduleCount(userId: string): Promise<number> {
+    return this.scheduleModel.countDocuments({
+      user: new Types.ObjectId(userId),
+    });
+  }
+
+  async getMonthlyScheduleCount(userId: string): Promise<number> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    return this.scheduleModel.countDocuments({
+      user: new Types.ObjectId(userId),
+      dateTime: {
+        $gte: startOfMonth,
+        $lte: endOfMonth,
+      },
+    });
   }
 }

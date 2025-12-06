@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument, PlanType, PLANS } from './user.schema';
+import { User, UserDocument, PlanType, PLANS, PlanConfig } from './user.schema';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -183,5 +183,79 @@ export class UsersService {
     await user.save();
 
     return { message: 'Password updated successfully' };
+  }
+
+  /**
+   * Get plan configuration for a user
+   */
+  async getUserPlanConfig(userId: string): Promise<PlanConfig> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const planType = user.plan || 'demo';
+    return PLANS[planType];
+  }
+
+  /**
+   * Check if user can create more addresses
+   */
+  async canCreateAddress(
+    userId: string,
+    currentAddressCount: number,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const planConfig = await this.getUserPlanConfig(userId);
+
+    if (planConfig.maxAddresses === 'unlimited') {
+      return { allowed: true };
+    }
+
+    if (currentAddressCount >= planConfig.maxAddresses) {
+      return {
+        allowed: false,
+        reason: `Limite de endereços atingido para o plano ${planConfig.name}. Máximo: ${planConfig.maxAddresses}`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  /**
+   * Check if user can create more schedules
+   */
+  async canCreateSchedule(
+    userId: string,
+    scheduleCountInPeriod: number,
+    totalScheduleCount?: number,
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const planConfig = await this.getUserPlanConfig(userId);
+
+    // Demo plan: check total limit
+    if (!planConfig.isPeriodic && planConfig.maxSchedulesTotal !== undefined) {
+      if (
+        totalScheduleCount !== undefined &&
+        totalScheduleCount >= planConfig.maxSchedulesTotal
+      ) {
+        return {
+          allowed: false,
+          reason: `Limite total de agendas atingido para o plano ${planConfig.name}. Máximo: ${planConfig.maxSchedulesTotal} agendas no total`,
+        };
+      }
+      return { allowed: true };
+    }
+
+    // Other plans: check monthly limit
+    if (
+      planConfig.isPeriodic &&
+      planConfig.maxSchedulesPerMonth !== undefined
+    ) {
+      if (scheduleCountInPeriod >= planConfig.maxSchedulesPerMonth) {
+        return {
+          allowed: false,
+          reason: `Limite mensal de agendas atingido para o plano ${planConfig.name}. Máximo: ${planConfig.maxSchedulesPerMonth} agendas por mês`,
+        };
+      }
+    }
+
+    return { allowed: true };
   }
 }
