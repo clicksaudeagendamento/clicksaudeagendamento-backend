@@ -69,6 +69,15 @@ export class User {
   @Prop({ default: false })
   accepted?: boolean;
 
+  @Prop({ default: false })
+  phoneVerified?: boolean;
+
+  @Prop()
+  verificationCode?: string;
+
+  @Prop()
+  verificationCodeExpiry?: Date;
+
   @Prop()
   trialEndDate?: Date;
 

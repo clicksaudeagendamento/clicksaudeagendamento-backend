@@ -90,6 +90,10 @@ export class UsersService {
     return this.userModel.findOne({ email });
   }
 
+  async findByPhone(phone: string) {
+    return this.userModel.findOne({ phone });
+  }
+
   async findByRegistration(registration: string) {
     return this.userModel.findOne({ registration }).select('-password');
   }
@@ -257,5 +261,36 @@ export class UsersService {
     }
 
     return { allowed: true };
+  }
+
+  /**
+   * Update verification code for user
+   */
+  async updateVerificationCode(
+    userId: string,
+    code: string,
+    expiry: Date,
+  ): Promise<void> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.verificationCode = code;
+    user.verificationCodeExpiry = expiry;
+    await user.save();
+  }
+
+  /**
+   * Activate user account after verification
+   */
+  async activateUser(userId: string): Promise<void> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.phoneVerified = true;
+    user.accepted = true;
+    user.verificationCode = undefined;
+    user.verificationCodeExpiry = undefined;
+    user.trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days trial
+    await user.save();
   }
 }

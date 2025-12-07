@@ -359,4 +359,25 @@ export class WhatsappSessionService implements OnModuleInit {
   onMessage(callback: (response: MessageResponse) => void) {
     this.onMessageCallback = callback;
   }
+
+  /**
+   * Send a message to a phone number
+   * @param phone Phone number with country code (e.g., 5511999999999)
+   * @param message Message to send
+   */
+  async sendMessage(phone: string, message: string): Promise<void> {
+    if (!this.isConnected() || !this.client) {
+      throw new Error('WhatsApp client is not connected');
+    }
+
+    try {
+      // Format phone number to WhatsApp ID format
+      const chatId = `55${phone}@c.us`;
+      await this.client.sendMessage(chatId, message);
+      this.logger.log(`Message sent to ${phone}`);
+    } catch (error) {
+      this.logger.error(`Failed to send message to ${phone}`, error);
+      throw new Error('Failed to send WhatsApp message');
+    }
+  }
 }

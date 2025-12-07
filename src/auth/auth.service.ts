@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { PLANS } from '../users/user.schema';
 import { LoginUserDto } from './dto/login-user.dto';
+import { WhatsappSessionService } from '../whatsapp/whatsapp-session.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly whatsappService: WhatsappSessionService,
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -22,7 +24,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
     if (user.role === 'customer' && !user.accepted) {
-      throw new BadRequestException('Aguardando aprovação do administrador');
+      throw new BadRequestException('Aguardando confirmação de cadastro');
     }
     return user;
   }
@@ -44,6 +46,99 @@ export class AuthService {
         trialEndDate: userObj.trialEndDate,
         plan: userObj.plan ? PLANS[userObj.plan] : null,
       },
+    };
+  }
+
+  /**
+   * Generate a 6-digit alphanumeric verification code
+   */
+  private generateVerificationCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  /**
+   * Send verification code via WhatsApp
+   */
+  async sendVerificationCode(phone: string): Promise<{ message: string }> {
+    // Find user by phone
+    const user = await this.usersService.findByPhone(phone);
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    // Check if user is already verified
+    if (user.phoneVerified && user.accepted) {
+      throw new BadRequestException('Usuário já verificado');
+    }
+
+    // Generate verification code
+    const code = this.generateVerificationCode();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save code to user
+    await this.usersService.updateVerificationCode(
+      (user._id as any).toString(),
+      code,
+      expiry,
+    );
+
+    // Send code via WhatsApp
+    const message = `🔐 *ClickSaúde - Confirmação de Cadastro*\n\nSeu código de verificação é: *${code}*\n\nEste código é válido por 10 minutos.\n\nSe você não solicitou este código, ignore esta mensagem.`;
+
+    try {
+      await this.whatsappService.sendMessage(phone, message);
+      return {
+        message: 'Código de verificação enviado via WhatsApp',
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        'Erro ao enviar código via WhatsApp. Certifique-se de que o WhatsApp está conectado.',
+      );
+    }
+  }
+
+  /**
+   * Verify the code and activate user account
+   */
+  async verifyCode(
+    phone: string,
+    code: string,
+  ): Promise<{ message: string; success: boolean }> {
+    // Find user by phone
+    const user = await this.usersService.findByPhone(phone);
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    // Check if code exists
+    if (!user.verificationCode) {
+      throw new BadRequestException('Nenhum código de verificação pendente');
+    }
+
+    // Check if code expired
+    if (
+      !user.verificationCodeExpiry ||
+      user.verificationCodeExpiry < new Date()
+    ) {
+      throw new BadRequestException('Código de verificação expirado');
+    }
+
+    // Verify code
+    if (user.verificationCode.toUpperCase() !== code.toUpperCase()) {
+      throw new BadRequestException('Código de verificação inválido');
+    }
+
+    // Update user - set phoneVerified and accepted to true, clear verification code
+    await this.usersService.activateUser((user._id as any).toString());
+
+    return {
+      message: 'Cadastro confirmado com sucesso! Você já pode fazer login.',
+      success: true,
     };
   }
 }
