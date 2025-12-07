@@ -88,7 +88,7 @@ export class AuthService {
     );
 
     // Send code via WhatsApp
-    const message = `🔐 *ClickSaúde - Confirmação de Cadastro*\n\nSeu código de verificação é: *${code}*\n\nEste código é válido por 10 minutos.\n\nSe você não solicitou este código, ignore esta mensagem.`;
+    const message = `👋 *Bem-vindo(a) ao ClickSaúde Agendamento!*\n\nPara finalizar seu cadastro, utilize o código: *${code}*\n\nEsse código é válido por 10 minutos.\n\nSe você não solicitou, basta ignorar a mensagem.`;
 
     try {
       await this.whatsappService.sendMessage(phone, message);
