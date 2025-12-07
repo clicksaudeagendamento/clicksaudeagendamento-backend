@@ -13,13 +13,18 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Install required dependencies for Puppeteer/Chromium
+# Install required dependencies for Puppeteer/Chromium and timezone
 RUN apt-get update && apt-get install -y \
     chromium \
     chromium-sandbox \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
+    tzdata \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+
+# Set timezone
+ENV TZ=America/Fortaleza
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY package*.json ./
 RUN npm install --production
