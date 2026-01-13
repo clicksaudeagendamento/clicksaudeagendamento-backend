@@ -24,7 +24,7 @@ export const PLANS: Record<PlanType, PlanConfig> = {
     isPeriodic: false, // Not monthly, it's a total limit
   },
   basic: {
-    name: 'one',
+    name: 'basic',
     price: 67,
     credits: 80,
     maxSchedulesPerMonth: 80, // 80 schedules per month
@@ -32,7 +32,7 @@ export const PLANS: Record<PlanType, PlanConfig> = {
     isPeriodic: true,
   },
   professional: {
-    name: 'pro',
+    name: 'professional',
     price: 99,
     credits: 120,
     maxSchedulesPerMonth: 120, // 120 schedules per month
@@ -40,7 +40,7 @@ export const PLANS: Record<PlanType, PlanConfig> = {
     isPeriodic: true,
   },
   enterprise: {
-    name: 'prime',
+    name: 'enterprise',
     price: 159,
     credits: 300,
     maxSchedulesPerMonth: 300, // 300 schedules per month
@@ -83,7 +83,7 @@ export class User {
 
   @Prop({
     type: String,
-    enum: ['demo', 'one', 'pro', 'prime'],
+    enum: ['demo', 'basic', 'professional', 'enterprise'],
     default: 'demo',
   })
   plan?: PlanType;
