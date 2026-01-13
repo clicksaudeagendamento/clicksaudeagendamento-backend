@@ -24,7 +24,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
     if (user.role === 'customer' && !user.accepted) {
-      throw new BadRequestException('Aguardando confirmação de cadastro');
+      throw new BadRequestException('Usuário inativo. Entre em contato com o administrador pelo número (85) 99424-5460');
     }
     return user;
   }
