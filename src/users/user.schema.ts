@@ -66,10 +66,10 @@ export class User {
   @Prop({ required: true, enum: ['admin', 'customer'], default: 'customer' })
   role: 'admin' | 'customer';
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   accepted?: boolean;
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   phoneVerified?: boolean;
 
   @Prop()

@@ -27,25 +27,31 @@ export class UsersService {
       }
     }
 
-    let plan: PlanType | undefined = 'demo';
-    if (dto.role === 'admin') {
-      plan = undefined;
-    }
-
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = new this.userModel({
+    
+    // Preparar dados do usuário com valores padrão
+    const userData: any = {
       fullName: dto.fullName,
       email: dto.email,
       phone: dto.phone,
       password: hashedPassword,
-      role: dto.role || 'customer',
-      ...(plan ? { plan } : {}),
-      ...(dto.role !== 'admin' ? { accepted: false } : {}),
+      role: dto.role || 'customer', // Padrão: customer
+      plan: dto.plan || 'demo', // Padrão: demo
+      accepted: true, // Padrão: true
+      phoneVerified: true, // Padrão: true
       specialty: dto.specialty,
       registration: dto.registration,
       address: dto.address,
       workingHours: dto.workingHours,
-    });
+    };
+
+    // Se for admin, remover plan e ajustar accepted
+    if (dto.role === 'admin') {
+      delete userData.plan;
+      userData.accepted = true; // Admin sempre aceito
+    }
+
+    const user = new this.userModel(userData);
     await user.save();
   }
 
