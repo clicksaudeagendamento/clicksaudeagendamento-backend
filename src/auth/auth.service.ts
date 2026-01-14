@@ -23,6 +23,13 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    
+    // Check if trial period is expired and update accepted status
+    if (user.role === 'customer' && user.trialEndDate && user.trialEndDate < new Date()) {
+      await this.usersService.update((user._id as any).toString(), { accepted: false });
+      user.accepted = false; // Update local user object
+    }
+    
     if (user.role === 'customer' && !user.accepted) {
       throw new BadRequestException('Usuário inativo. Entre em contato com o administrador pelo número (85) 99424-5460');
     }
