@@ -161,16 +161,17 @@ export class AppointmentQueueService {
       minute: '2-digit',
     });
 
-    return `👋 Olá, ${patientName}!
+    return `
+      👋 Olá, ${patientName}!\n
 
-⏰ Lembrete: você tem uma consulta **AMANHÃ às ${time}** com **${professionalName}**${specialty ? ` (${specialty})` : ''}.
+      ⏰ Este é um lembrete da sua consulta com Dr(a). *${professionalName}*\n
 
-${address ? `📍 ${address}\n` : ''}📆 ${dayOfWeek}, ${formattedDate}
-🕐 ${time}
+      📆 amanhã, *${dayOfWeek}*, *${formattedDate}*\n
+      🕗 *${time}*\n
+      ${address ? `📍 https://maps.google.com/?q=${address}\n\n` : '\n\n'}
 
-Confirme sua presença respondendo:
-✅ SIM – Estarei presente
-❌ NÃO – Desejo remarcar ou cancelar`;
+      Caso precise de mais informações, estamos à disposição.
+    `;
   }
 
   async getQueueStats() {
